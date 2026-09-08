@@ -5,12 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f4ead8">
 <title>On It — 질문 노트</title>
-<!-- PWA Manifest & Meta Tags (Data URI) -->
-<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"On It — 질문 노트","short_name":"OnIt","start_url":"./index.html","display":"standalone","background_color":"%23f3eadb","theme_color":"%23f4ead8","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]}'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="On It">
-<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
     --bg:#f3eadb;
@@ -143,6 +140,32 @@
     .question{font-size:23px}
   }
 </style>
+<script>
+// 동적 Blob URL을 활용한 Manifest 주입 (모바일 크롬 PWA 설치 지원)
+(function() {
+  const manifestData = {
+    "name": "On It — 질문 노트",
+    "short_name": "OnIt",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#f3eadb",
+    "theme_color": "#f4ead8",
+    "icons": [
+      {
+        "src": "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23c96f52%22/><text x=%2250%%22 y=%2254%%22 font-size=%2250%22 text-anchor=%22middle%22 dominant-baseline=%22central%22 fill=%22%23fffaf0%22>Q</text></svg>",
+        "sizes": "192x192",
+        "type": "image/svg+xml"
+      }
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
+  const manifestURL = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = manifestURL;
+  document.currentScript.parentNode.appendChild(link);
+})();
+</script>
 </head>
 <body>
 <div class="app">
@@ -173,7 +196,7 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// PWA Service Worker (Blob URL을 이용해 파일 추가 없이 단독 동작)
+// PWA Service Worker 등록
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     const swCode = `
