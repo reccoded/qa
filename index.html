@@ -5,13 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f4ead8">
 <title>On It — 질문 노트</title>
-
-<!-- PWA 앱 설치 및 아이콘 설정을 위한 메타 태그와 매니페스트 링크 -->
-<link rel="manifest" href="manifest.json">
+<!-- PWA Manifest & Meta Tags (Data URI) -->
+<link rel="manifest" href='data:application/manifest+json;charset=utf-8,{"name":"On It — 질문 노트","short_name":"OnIt","start_url":"./index.html","display":"standalone","background_color":"%23f3eadb","theme_color":"%23f4ead8","icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"}]}'>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="On It">
-
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{
     --bg:#f3eadb;
@@ -174,6 +173,24 @@
 <div class="toast" id="toast"></div>
 
 <script>
+// PWA Service Worker (Blob URL을 이용해 파일 추가 없이 단독 동작)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const swCode = `
+      self.addEventListener('install', e => self.skipWaiting());
+      self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+      self.addEventListener('fetch', e => {
+        e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+      });
+    `;
+    const blob = new Blob([swCode], {type: 'text/javascript'});
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl)
+      .then(reg => console.log('ServiceWorker registered!', reg))
+      .catch(err => console.log('ServiceWorker registration failed: ', err));
+  });
+}
+
 const DEFAULT_CATEGORIES = [
   {id:"story", name:"🎬 스토리"},
   {id:"character", name:"👤 인물"},
@@ -429,7 +446,7 @@ const QUESTIONS = [
   ["brainstorm","이 영화에서 단 한 명만 거짓말을 하지 않는다면 누구일까?"],
   ["brainstorm","모든 인물이 주인공을 걱정하지만 주인공만 그 이유를 모른다면?"],
   ["brainstorm","이야기의 가장 큰 비밀을 알고 있는 사람이 그 비밀의 의미를 모른다면?"],
-  ["brainstorm","주인공이 사건 직전에 아주 좋은 하루를 보냈다면 사건의 감정은 어떻게 달라질까?"],
+  ["brainstorm","주인공이 직전에 아주 좋은 하루를 보냈다면 사건의 감정은 어떻게 달라질까?"],
   ["brainstorm","이 영화의 제목이 사실 영화 속 누군가의 사소한 농담이라면?"],
   ["brainstorm","주인공이 마지막 순간에 목표를 포기하고 다른 사람을 도와준다면 왜일까?"],
   ["brainstorm","이 영화의 첫 장면을 본 사람이 마지막 장면을 본다면 어떤 질문을 하게 될까?"],
@@ -493,7 +510,6 @@ let questions = loadQuestions();
 let favorites = new Set(JSON.parse(localStorage.getItem(LS_F)||"[]"));
 let currentQuestionId = null;
 let currentView = "random";
-let editingQuestionId = null;
 
 function loadCategories(){
   try{
@@ -623,7 +639,6 @@ function renderManage(){
     <div class="panel" style="margin-top:16px">
       <div class="panel-title">카테고리 관리</div>
       <div class="form-row"><input id="newCat" placeholder="새 카테고리 이름 (예: 🎭 장르)"><button class="primary" id="addCat">+ 추가</button></div>
-      <p class="small">카테고리는 몇 개든 만들 수 있으며, 랜덤에서는 모든 질문이 동일한 확률로 뽑힙니다.</p>
       <div class="list" style="margin-top:12px">
         ${categories.map(c=>`<div class="item"><div class="item-main"><div class="item-text">${escapeHtml(c.name)} <span class="small">· ${questions.filter(q=>q.categoryId===c.id).length}개</span></div></div><div class="item-actions"><button class="icon-btn" data-rename="${escapeHtml(c.id)}">수정</button>${categories.length>1?`<button class="icon-btn" data-delcat="${escapeHtml(c.id)}">삭제</button>`:""}</div></div>`).join("")}
       </div>
@@ -692,7 +707,6 @@ function exportMarkdown(){
 document.querySelectorAll(".nav button").forEach(b=>b.onclick=()=>setView(b.dataset.view));
 document.getElementById("exportMd").onclick=exportMarkdown;
 document.getElementById("mobileMenu").onclick=()=>{
-  const names=categories.map(c=>c.name).join("\n");
   const choice=prompt("메뉴를 선택하세요:\n\n1 = 랜덤\n2 = 카테고리\n3 = 즐겨찾기\n4 = 질문 관리");
   if(choice==="1")setView("random");
   if(choice==="2")setView("categories");
@@ -700,21 +714,6 @@ document.getElementById("mobileMenu").onclick=()=>{
   if(choice==="4")setView("manage");
 };
 setView("random");
-
-/* =========================================================
-   PWA 서비스 워커 등록 스크립트 추가
-========================================================= */
-if ("serviceWorker" in navigator) {
-  window.addEventListener("load", () => {
-    navigator.serviceWorker.register("sw.js")
-      .then((reg) => {
-        console.log("ServiceWorker registered: ", reg);
-      })
-      .catch((err) => {
-        console.log("ServiceWorker registration failed: ", err);
-      });
-  });
-}
 </script>
 </body>
 </html>
