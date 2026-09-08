@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#f4ead8">
 <title>On It — 질문 노트</title>
+
+<!-- PWA 앱 설치 및 아이콘 설정을 위한 메타 태그와 매니페스트 링크 -->
+<link rel="manifest" href="manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="On It">
+
 <style>
   :root{
     --bg:#f3eadb;
@@ -693,6 +700,21 @@ document.getElementById("mobileMenu").onclick=()=>{
   if(choice==="4")setView("manage");
 };
 setView("random");
+
+/* =========================================================
+   PWA 서비스 워커 등록 스크립트 추가
+========================================================= */
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("sw.js")
+      .then((reg) => {
+        console.log("ServiceWorker registered: ", reg);
+      })
+      .catch((err) => {
+        console.log("ServiceWorker registration failed: ", err);
+      });
+  });
+}
 </script>
 </body>
 </html>
